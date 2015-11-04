@@ -28,12 +28,14 @@ import javax.xml.bind.annotation.XmlRootElement;
 public class FiltroBusquedaModel implements java.io.Serializable {
     private static final long serialVersionUID = 1L;
     private Integer id;     // Id del par+ametro
+    private String campo;
     private String descripcion;
     private String tipoControl;
     private String tipoDato;
     private Integer idCatalogo;
     private String comparador;
-    private List<ElementoCatalogoModel> catalogo;
+//    private List<ElementoCatalogoModel> catalogo;
+    private List<ValorListaModel> valoresLista;
     private String valor;
     private Integer idValor;
     private Date fecha;
@@ -42,9 +44,10 @@ public class FiltroBusquedaModel implements java.io.Serializable {
         // required for JAXB
     }
     
-    public FiltroBusquedaModel(Integer id, String descripcion, String tipoControl, String tipoDato, 
+    public FiltroBusquedaModel(Integer id, String campo, String descripcion, String tipoControl, String tipoDato, 
             Integer idCatalogo, String comparador) {
         this.id = id;
+        this.campo = campo;
         this.descripcion = descripcion;
         this.tipoControl = tipoControl;
         this.tipoDato = tipoDato;
@@ -123,20 +126,6 @@ public class FiltroBusquedaModel implements java.io.Serializable {
     }
 
     /**
-     * @return the catalogo
-     */
-    public List<ElementoCatalogoModel> getCatalogo() {
-        return catalogo;
-    }
-
-    /**
-     * @param catalogo the catalogo to set
-     */
-    public void setCatalogo(List<ElementoCatalogoModel> catalogo) {
-        this.catalogo = catalogo;
-    }
-
-    /**
      * @return the comparador
      */
     public String getComparador() {
@@ -190,6 +179,34 @@ public class FiltroBusquedaModel implements java.io.Serializable {
      */
     public void setFecha(Date fecha) {
         this.fecha = fecha;
+    }
+
+    /**
+     * @return the valoresLista
+     */
+    public List<ValorListaModel> getValoresLista() {
+        return valoresLista;
+    }
+
+    /**
+     * @param valoresLista the valoresLista to set
+     */
+    public void setValoresLista(List<ValorListaModel> valoresLista) {
+        this.valoresLista = valoresLista;
+    }
+
+    /**
+     * @return the campo
+     */
+    public String getCampo() {
+        return campo;
+    }
+
+    /**
+     * @param campo the campo to set
+     */
+    public void setCampo(String campo) {
+        this.campo = campo;
     }
 
 }

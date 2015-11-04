@@ -24,6 +24,7 @@ import javax.persistence.PersistenceContext;
 import mx.org.inai.viajesclaros.model.BusquedaModel;
 import mx.org.inai.viajesclaros.model.ElementoCatalogoModel;
 import mx.org.inai.viajesclaros.model.FiltroBusquedaModel;
+import mx.org.inai.viajesclaros.model.ValorListaModel;
 import mx.org.inai.viajesclaros.model.ViajeResultModel;
 import org.apache.log4j.Logger;
 import org.hibernate.Session;
@@ -46,7 +47,7 @@ public class BusquedaService {
     public List<FiltroBusquedaModel> getFiltrosByDependencia(Integer idDependencia) {
         Session session = em.unwrap(Session.class);
 
-        List<FiltroBusquedaModel> filtros = session.createSQLQuery("CALL get_filtros_busqueda(:idDep)")
+        List<FiltroBusquedaModel> filtros = session.createSQLQuery("CALL get_filtros_por_dependencia(:idDep)")
                 .setParameter("idDep", idDependencia)
                 .setResultTransformer(new BasicTransformerAdapter() {
                     private static final long serialVersionUID = 1L;
@@ -54,13 +55,14 @@ public class BusquedaService {
                     @Override
                     public Object transformTuple(Object[] tuple, String[] aliases) {
                         Integer id = (Integer) tuple[0];
-                        String descripcion = (String) tuple[1];
-                        String tipoControl = (String) tuple[2];
-                        String tipoDato = (String) tuple[3];
-                        Integer idCatalogo = (Integer) tuple[4];
-                        String comparador = (String) tuple[5];
+                        String campo = (String) tuple[2];
+                        String descripcion = (String) tuple[3];
+                        String tipoDato = (String) tuple[4];
+                        String tipoControl = (String) tuple[5];
+                        String comparador = (String) tuple[6];
+                        Integer idCatalogo = (Integer) tuple[7];
 
-                        return new FiltroBusquedaModel(id, descripcion, tipoControl, tipoDato,
+                        return new FiltroBusquedaModel(id, campo, descripcion, tipoControl, tipoDato,
                                 idCatalogo, comparador);
                     }
                 })
@@ -69,21 +71,22 @@ public class BusquedaService {
         /* Si el filtro es catálogo, se deben traer los elementos del catálogo */
         for (FiltroBusquedaModel f : filtros) {
             if (f.getIdCatalogo() != null && f.getIdCatalogo() > 0) {
-                List<ElementoCatalogoModel> cat = session.createSQLQuery("CALL get_catalogo(:idCatalogo)")
-                        .setParameter("idCatalogo", f.getIdCatalogo())
+                List<ValorListaModel> cat = session.createSQLQuery("CALL get_valores_dinamicos_por_id_lista(:idLista)")
+                        .setParameter("idLista", f.getIdCatalogo())
                         .setResultTransformer(new BasicTransformerAdapter() {
                             private static final long serialVersionUID = 1L;
 
                             @Override
                             public Object transformTuple(Object[] tuple, String[] aliases) {
-                                Integer id = (Integer) tuple[2];
-                                String descripcion = (String) tuple[3];
-
-                                return new ElementoCatalogoModel(id, descripcion);
+                                ValorListaModel valor = new ValorListaModel();
+                                valor.setIdLista((Integer) tuple[0]);
+                                valor.setCodigo((String) tuple[1]);
+                                valor.setValor((String) tuple[2]);
+                                return valor;
                             }
                         })
                         .list();
-                f.setCatalogo(cat);
+                f.setValoresLista(cat);
             }
         }
 
@@ -106,8 +109,8 @@ public class BusquedaService {
 
                     @Override
                     public Object transformTuple(Object[] tuple, String[] aliases) {
-                        Integer id = (Integer) tuple[0];
-                        String descripcion = (String) tuple[1];
+                        Integer id = 0;
+                        String descripcion = (String) tuple[2];
 
                         return new ElementoCatalogoModel(id, descripcion);
                     }
@@ -157,8 +160,9 @@ public class BusquedaService {
 
         /* Crear la parte del WHERE del query */
         for (FiltroBusquedaModel p : busquedaModel.getParametros()) {
-            if (p.getTipoControl().equals("catalogo") && p.getIdValor() != 0) {
-                queryWhere += " AND " + p.getDescripcion().replace(" ", "_") + "_id = " + p.getIdValor();
+            if (p.getTipoControl().equals("SELECT") && p.getIdValor() != 0) {
+//                queryWhere += " AND " + p.getDescripcion().replace(" ", "_") + "_id = " + p.getIdValor();
+                queryWhere += " AND " + p.getDescripcion() + " = " + p.getIdValor();
             } else {
                 if (p.getComparador() == null) {
                     p.setComparador("=");
@@ -175,7 +179,7 @@ public class BusquedaService {
                     case ">":
                     case "<=":
                     case ">=":
-                        if (p.getTipoDato().equals("date")) {
+                        if (p.getTipoDato().equals("DATE")) {
                             queryWhere += " AND STR_TO_DATE(" + p.getDescripcion().replace(" ", "_") 
                                     + ", \"%d/%m/%Y\")" + p.getComparador() 
                                     + " STR_TO_DATE( \"" + p.getValor() + "\", \"%d/%m/%Y\")";
